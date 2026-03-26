@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% load static %}
+    {% csrf_token %}
+
+    <button id="aiSuggestBtn" class="btn btn--outline btn--block">
+  🤖 Get AI Suggestion
+</button>
+
+<p id="aiResult" class="compare__note"></p>
+
+
+
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<script>
+  window.ASSET_IMAGE_OPTIONS = {{ asset_image_options_json|safe }};
+</script>
+<script src="{% static 'css/js/script.js' %}"></script>
+
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="FetchhIt — a reverse e-commerce marketplace where buyers request deals and sellers post items." />
+    <title>FetchhIt — Deal your way</title>
+
+    <!-- Font (no framework; safe fallback to system fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <!-- Navbar: LEFT logo | CENTER search | RIGHT auth — no overlap guaranteed -->
+    <header class="topbar" role="banner">
+
+      <!-- Tier 1: 3-column flex layout -->
+      <div class="container topbar__inner">
+
+        <!-- LEFT: Brand logo -->
+        <a class="brand" href="/index.html" aria-label="FetchIt home">
+           <img class="brand__logo" src="{% static 'assets/logo.png' %}" />
+          <span class="brand__text">
+            <span class="brand__name">FetchIt</span>
+            <span class="brand__tagline">you ask it,we FETCH it</span>
+          </span>
+        </a>
+
+        <!-- CENTER: Search bar — flex-grow, never overlaps buttons -->
+        <form class="search" role="search" aria-label="Search items">
+          <label class="sr-only" for="search">Search</label>
+          <input
+            id="search"
+            class="search__input"
+            type="search"
+            placeholder="Search buyer requests — mobiles, laptops, shoes..."
+            autocomplete="off"
+          />
+          <button class="search__btn" type="submit" aria-label="Search">Search</button>
+        </form>
+
+        <!-- RIGHT: Auth buttons — equal gap, right-aligned -->
+        <nav class="topbar__actions" aria-label="Account">
+          <a id="navLogin" class="btn btn--ghost" href="#login-modal">Login</a>
+          
+          <button id="navLogout" class="btn btn--ghost" type="button" hidden>Logout</button>
+          <a class="btn btn--white" href="#post-modal">Become Seller</a>
+        </nav>
+      </div>
+
+      <!-- Tier 2: Full-width navy navigation strip -->
+      <div class="topbar__nav-strip">
+        <nav class="topbar__nav-strip-inner container" aria-label="Primary">
+          <button id="navHomeBtn" class="nav-link" type="button">🏠 Home</button>
+          <a class="nav-link" href="#post-modal">📦 Post Item</a>
+          <a class="nav-link" href="#compare-modal">⇄ Compare</a>
+          <button id="navRequestsBtn" class="nav-link" type="button">📋 My Requests</button>
+        </nav>
+      </div>
+    </header>
+        
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <nav class="categories" aria-label="Categories">
+      <div class="container categories__inner">
+        <a class="category category-btn" data-category="Mobiles" href="#" aria-label="Mobiles category">
+          <span class="category__icon" aria-hidden="true">📱</span>
+          <span class="category__label">Mobiles</span>
+        </a>
+        <a class="category category-btn" data-category="Fashion" href="#" aria-label="Fashion category">
+          <span class="category__icon" aria-hidden="true">👟</span>
+          <span class="category__label">Fashion</span>
+        </a>
+        <a class="category category-btn" data-category="Electronics" href="#" aria-label="Electronics category">
+          <span class="category__icon" aria-hidden="true">💻</span>
+          <span class="category__label">Electronics</span>
+        </a>
+        <a class="category category-btn" data-category="Home" href="#" aria-label="Home category">
+          <span class="category__icon" aria-hidden="true">🏠</span>
+          <span class="category__label">Home</span>
+        </a>
+        <a class="category category-btn" data-category="Appliances" href="#" aria-label="Appliances category">
+          <span class="category__icon" aria-hidden="true">🧺</span>
+          <span class="category__label">Appliances</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Banner / Offers -->
+    <section class="banner" aria-label="Highlights">
+      <div class="container">
+        <div class="banner__card" role="img" aria-label="Hero banner placeholder">
+          <div class="banner__content">
+            <p class="banner__eyebrow">✦ Reverse marketplace</p>
+            <h1 class="banner__title">Buyers request. Sellers respond.</h1>
+            <p class="banner__subtitle">
+              Post items you can supply, discover live buyer requests, and negotiate the best deal.
+              Instead of “Buy Now”, hit <strong>Request Deal</strong>.
+            </p>
+            <div class="banner__cta">
+              <a class="btn btn--primary" href="#post-modal">Post an Item →</a>
+            </div>
+          </div>
+
+          <!-- Decorative “offer tiles” -->
+          <div class="banner__tiles" aria-hidden="true">
+            <div class="tile">
+              <p class="tile__kicker">Trending</p>
+              <p class="tile__value">Phones</p>
+            </div>
+            <div class="tile">
+              <p class="tile__kicker">Hot</p>
+              <p class="tile__value">Sneakers</p>
+            </div>
+            <div class="tile">
+              <p class="tile__kicker">New</p>
+              <p class="tile__value">Laptops</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main layout -->
+    <main id="main" class="page" role="main">
+      <section id="logoSection" class="container placeholder placeholder--home" aria-live="polite" style="display: grid">
+        <div class="home-hero">
+          <div class="home-hero__main">
+            <p class="home-hero__eyebrow">Reverse Commerce Platform</p>
+            <h1 class="home-hero__title">Buyers ask first. Sellers compete to win the deal.</h1>
+            <p class="home-hero__text">
+              FetchhIt turns traditional e-commerce upside down by letting buyers raise demand and sellers respond with offers,
+              better pricing, and faster fulfilment.
+            </p>
+            <div class="home-hero__actions">
+              <a class="btn btn--primary" href="#login-modal">Start as Buyer</a>
+              <a class="btn btn--outline" href="#post-modal">Post as Seller</a>
+            </div>
+            <div class="home-hero__categories">
+              <button class="home-chip category-btn" data-category="Mobiles" type="button">Mobiles</button>
+              <button class="home-chip category-btn" data-category="Electronics" type="button">Electronics</button>
+              <button class="home-chip category-btn" data-category="Fashion" type="button">Fashion</button>
+              <button class="home-chip category-btn" data-category="Home" type="button">Home</button>
+              <button class="home-chip category-btn" data-category="Appliances" type="button">Appliances</button>
+            </div>
+          </div>
+          <div class="home-hero__spotlight">
+            <div class="home-stat-card">
+              <p class="home-stat-card__label">Core Value</p>
+              <p class="home-stat-card__value">Buyer-led negotiation</p>
+              <p class="home-stat-card__text">Flexible offers, better matching, and faster discovery for both sides.</p>
+            </div>
+            <div class="home-stat-grid">
+              <article class="home-mini-stat">
+                <p id="homeMetricCategories" class="home-mini-stat__number">5</p>
+                <p class="home-mini-stat__label">Active Categories</p>
+              </article>
+              <article class="home-mini-stat">
+                <p id="homeMetricListings" class="home-mini-stat__number">50+</p>
+                <p class="home-mini-stat__label">Demo Listings</p>
+              </article>
+              <article class="home-mini-stat">
+                <p id="homeMetricRoles" class="home-mini-stat__number">2 Roles</p>
+                <p class="home-mini-stat__label">Buyer + Seller</p>
+              </article>
+              <article class="home-mini-stat">
+                <p id="homeMetricRequests" class="home-mini-stat__number">Live</p>
+                <p class="home-mini-stat__label">Deal Requests</p>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div class="home-highlights">
+          <article class="home-highlight">
+            <p class="home-highlight__kicker">Search & Filter</p>
+            <h3 class="home-highlight__title">Find demand instantly</h3>
+            <p class="home-highlight__text">Category-based browsing, price filtering, and quick search make product discovery fast.</p>
+          </article>
+          <article class="home-highlight">
+            <p class="home-highlight__kicker">Seller Workflow</p>
+            <h3 class="home-highlight__title">Post, edit, and manage items</h3>
+            <p class="home-highlight__text">Seller accounts can publish listings, update pricing, swap images, and delete products easily.</p>
+          </article>
+          <article class="home-highlight">
+            <p class="home-highlight__kicker">Deal Engine</p>
+            <h3 class="home-highlight__title">Request, accept, or reject</h3>
+            <p class="home-highlight__text">Buyers submit delivery details with offers, and sellers take action from one request panel.</p>
+          </article>
+        </div>
+        <div class="home-flow">
+          <article class="home-flow__step">
+            <span class="home-flow__index">01</span>
+            <h3 class="home-flow__title">Buyer discovers demand</h3>
+            <p class="home-flow__text">Search, filter, compare, and select the right product category before opening a deal request.</p>
+          </article>
+          <article class="home-flow__step">
+            <span class="home-flow__index">02</span>
+            <h3 class="home-flow__title">Deal request is submitted</h3>
+            <p class="home-flow__text">The buyer shares offered price, payment method, address, city, pincode, and contact details in one step.</p>
+          </article>
+          <article class="home-flow__step">
+            <span class="home-flow__index">03</span>
+            <h3 class="home-flow__title">Seller responds instantly</h3>
+            <p class="home-flow__text">Sellers review incoming requests, manage items, and accept or reject opportunities from the dashboard.</p>
+          </article>
+        </div>
+      </section>
+
+      <div class="container page__grid">
+        <!-- Left sidebar: Filters -->
+        <aside id="filtersSection" class="panel panel--sticky" aria-label="Filters">
+          <header class="panel__header">
+            <h2 class="panel__title">Filters</h2>
+            <p class="panel__subtitle">Narrow down buyer requests</p>
+          </header>
+
+          <form id="filterForm" class="filters" action="#" method="get">
+            <fieldset class="filters__group">
+              <legend class="filters__legend">Price (₹)</legend>
+              <div class="field">
+                <label class="field__label" for="minPrice">Min</label>
+                <input id="minPrice" class="field__input" type="number" inputmode="numeric" placeholder="1000" />
+              </div>
+              <div class="field">
+                <label class="field__label" for="maxPrice">Max</label>
+                <input id="maxPrice" class="field__input" type="number" inputmode="numeric" placeholder="50000" />
+              </div>
+              <button class="btn btn--primary btn--block" type="submit">Apply</button>
+            </fieldset>
+
+
+            <fieldset class="filters__group">
+              <legend class="filters__legend">Category</legend>
+              <label class="radio">
+                <input class="radio__input" type="radio" name="category" value="all" checked />
+                <span class="radio__dot" aria-hidden="true"></span>
+                <span class="radio__label">All</span>
+              </label>
+              <label class="radio">
+                <input class="radio__input" type="radio" name="category" value="Mobiles" />
+                <span class="radio__dot" aria-hidden="true"></span>
+                <span class="radio__label">Mobiles</span>
+              </label>
+              <label class="radio">
+                <input class="radio__input" type="radio" name="category" value="Fashion" />
+                <span class="radio__dot" aria-hidden="true"></span>
+                <span class="radio__label">Fashion</span>
+              </label>
+              <label class="radio">
+                <input class="radio__input" type="radio" name="category" value="Electronics" />
+                <span class="radio__dot" aria-hidden="true"></span>
+                <span class="radio__label">Electronics</span>
+              </label>
+              <label class="radio">
+                <input class="radio__input" type="radio" name="category" value="Home" />
+                <span class="radio__dot" aria-hidden="true"></span>
+                <span class="radio__label">Home</span>
+              </label>
+              <label class="radio">
+                <input class="radio__input" type="radio" name="category" value="Appliances" />
+                <span class="radio__dot" aria-hidden="true"></span>
+                <span class="radio__label">Appliances</span>
+              </label>
+            </fieldset>
+          </form>
+        </aside>
+
+        <!-- Center: Product grid -->
+        <section id="buyerSection" class="content" aria-label="Requested items">
+          <header class="content__header">
+            <div>
+              <h2 id="contentSectionTitle" class="content__title">Buyer Requests</h2>
+              <p id="contentSectionSubtitle" class="content__subtitle">
+                FetchhIt is reverse e‑commerce: buyers request items, sellers make offers.
+              </p>
+              <p id="requestDealMessage" class="form-success form-inline" role="status" aria-live="polite" hidden></p>
+            </div>
+            <div class="content__meta">
+              <span class="pill" aria-label="Sort option">Sort: Popular</span>
+              <a class="btn btn--outline" href="#post-modal">Post Item</a>
+            </div>
+          </header>
+
+          <div id="gridLoader" class="grid-loader" style="display: none">
+            <span class="spinner" aria-hidden="true"></span>
+            <p class="muted">Loading items...</p>
+          </div>
+
+          <div id="content" class="grid" role="list" style="display: none">
+            <!-- Card 1 -->
+            <article class="card" role="listitem">
+              <div class="card__media">
+                <img
+                  class="card__img"
+                  src="{% static 'assets/iphone13.jpg' %}"
+                  alt="iPhone 13 request"
+                  loading="lazy"
+                />
+              </div>
+              <div class="card__body">
+                <header class="card__top">
+                  <h3 class="card__title">iPhone 13 (128GB) — Blue</h3>
+                  <span class="tag tag--mobiles">Mobiles</span>
+                </header>
+                <p class="card__price" aria-label="Requested price">₹ 42,999</p>
+                <p class="card__hint">Buyer wants: Like New • Delivery in 3 days</p>
+               
+                <div class="card__actions">
+                  <a class="btn btn--primary btn--block request-deal-btn" href="#">Request Deal</a>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 2 -->
+            <article class="card" role="listitem">
+              <div class="card__media">
+                <img
+                  class="card__img"
+                  src="./assets/sneakers.svg"
+                  alt="Running sneakers request"
+                  loading="lazy"
+                />
+              </div>
+              <div class="card__body">
+                <header class="card__top">
+                  <h3 class="card__title">Running Sneakers — Size 9</h3>
+                  <span class="tag tag--fashion">Fashion</span>
+                </header>
+                <p class="card__price" aria-label="Requested price">₹ 2,499</p>
+                <p class="card__hint">Buyer wants: New • Preferred brand: Nike/Adidas</p>
+                <div class="card__actions">
+                  <a class="btn btn--primary btn--block request-deal-btn" href="#">Request Deal</a>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 3 -->
+            <article class="card" role="listitem">
+              <div class="card__media">
+                <img
+                  class="card__img"
+                  src="./assets/laptop.svg"
+                  alt="Gaming laptop request"
+                  loading="lazy"
+                />
+              </div>
+              <div class="card__body">
+                <header class="card__top">
+                  <h3 class="card__title">Gaming Laptop — i7 / 16GB / RTX</h3>
+                  <span class="tag tag--electronics">Electronics</span>
+                </header>
+                <p class="card__price" aria-label="Requested price">₹ 74,990</p>
+                <p class="card__hint">Buyer wants: Used • Warranty preferred</p>
+                <div class="card__actions">
+                  <a class="btn btn--primary btn--block request-deal-btn" href="#">Request Deal</a>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 4 -->
+            <article class="card" role="listitem">
+              <div class="card__media">
+                <img
+                  class="card__img"
+                  src="./assets/sofa.svg"
+                  alt="Sofa set request"
+                  loading="lazy"
+                />
+              </div>
+              <div class="card__body">
+                <header class="card__top">
+                  <h3 class="card__title">Sofa Set — 3+1+1</h3>
+                  <span class="tag tag--home">Home</span>
+                </header>
+                <p class="card__price" aria-label="Requested price">₹ 18,500</p>
+                <p class="card__hint">Buyer wants: Used • Nearby pickup</p>
+                <div class="card__actions">
+                  <a class="btn btn--primary btn--block request-deal-btn" href="#">Request Deal</a>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 5 -->
+            <article class="card" role="listitem">
+              <div class="card__media">
+                <img
+                  class="card__img"
+                  src="./assets/washing-machine.svg"
+                  alt="Front load washing machine request"
+                  loading="lazy"
+                />
+              </div>
+              <div class="card__body">
+                <header class="card__top">
+                  <h3 class="card__title">Front Load Washing Machine</h3>
+                  <span class="tag tag--appliances">Appliances</span>
+                </header>
+                <p class="card__price" aria-label="Requested price">₹ 19,999</p>
+                <p class="card__hint">Buyer wants: Like New • Installation required</p>
+                <div class="card__actions">
+                  <a class="btn btn--primary btn--block request-deal-btn" href="#">Request Deal</a>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 6 -->
+            <article class="card" role="listitem">
+              <div class="card__media">
+                <img
+                  class="card__img"
+                  src="./assets/earbuds.svg"
+                  alt="Bluetooth earbuds request"
+                  loading="lazy"
+                />
+              </div>
+              <div class="card__body">
+                <header class="card__top">
+                  <h3 class="card__title">Bluetooth Earbuds — ANC</h3>
+                  <span class="tag tag--electronics">Electronics</span>
+                </header>
+                <p class="card__price" aria-label="Requested price">₹ 3,299</p>
+                <p class="card__hint">Buyer wants: New • Color: Black</p>
+                <div class="card__actions">
+                  <a class="btn btn--primary btn--block request-deal-btn" href="#">Request Deal</a>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Right sidebar: Request panel -->
+        <aside id="incomingSection" class="panel panel--sticky" aria-label="Your requests">
+          <header class="panel__header panel__header--row">
+            <div>
+              <h2 id="requestsPanelTitle" class="panel__title">Your Requests</h2>
+              <p id="requestsPanelSubtitle" class="panel__subtitle">Items you’ve asked sellers for</p>
+            </div>
+            <a class="link" href="#post-modal">+ Post</a>
+          </header>
+
+          <ul id="buyerRequestList" class="requests" aria-label="Requested items list">
+            <li class="request">
+              <div class="request__main">
+                <p class="request__name">iPhone 13 • 128GB</p>
+                <p class="request__meta">₹ 42,999 • Mobiles</p>
+              </div>
+              <span class="badge badge--active">Open</span>
+            </li>
+            <li class="request">
+              <div class="request__main">
+                <p class="request__name">Sneakers • Size 9</p>
+                <p class="request__meta">₹ 2,499 • Fashion</p>
+              </div>
+              <span class="badge">Pending</span>
+            </li>
+            <li class="request">
+              <div class="request__main">
+                <p class="request__name">Washing Machine</p>
+                <p class="request__meta">₹ 19,999 • Appliances</p>
+              </div>
+              <span class="badge">Pending</span>
+            </li>
+          </ul>
+
+          <div class="panel__footer">
+            <p class="muted">
+              Tip: In FetchhIt, you request deals from sellers instead of buying instantly.
+            </p>
+            <a class="btn btn--outline btn--block" href="#post-modal">Post Item (Seller)</a>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- CSS-only Modal (UI only): open via #post-modal -->
+    <div id="post-modal" class="modal" role="dialog" aria-modal="true" aria-label="Post item">
+      <a class="modal__backdrop" href="#" aria-label="Close modal"></a>
+      <div class="modal__panel" role="document">
+        <header class="modal__header">
+          <h2 id="postItemModalTitle" class="modal__title">Post an Item (Seller)</h2>
+          <a class="icon-btn" href="#" aria-label="Close">×</a>
+        </header>
+
+        <form id="postItemForm" class="modal__form" action="#" method="post" novalidate>
+          <div class="field">
+            <label class="field__label" for="itemName">Item name</label>
+            <input id="itemName" class="field__input" type="text" placeholder="e.g. iPhone 13 (128GB)" required />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="itemPrice">Price (₹)</label>
+            <input
+              id="itemPrice"
+              class="field__input"
+              type="number"
+              inputmode="numeric"
+              placeholder="e.g. 14999"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="itemCategory">Category</label>
+            <select id="itemCategory" class="field__input" required>
+              <option value="Mobiles">Mobiles</option>
+              <option value="Fashion">Fashion</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Home">Home</option>
+              <option value="Appliances">Appliances</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="itemImage">Image Path</label>
+            <select id="itemImage" class="field__input">
+              <option value="">Select image from assets</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="itemDescription">Description</label>
+            <textarea
+              id="itemDescription"
+              class="field__input"
+              placeholder="Add short details about the item"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <p id="postItemError" class="form-error" role="status" aria-live="polite" hidden></p>
+          <p id="postItemSuccess" class="form-success" role="status" aria-live="polite" hidden></p>
+
+          <div class="modal__actions">
+            <button id="postItemSubmit" class="btn btn--primary btn--block" type="submit">Post Item</button>
+            <a class="btn btn--ghost btn--block" href="#">Cancel</a>
+          </div>
+
+          <p class="modal__note muted">
+            Real submit: This sends data to <code>/api/products</code> for logged-in sellers.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Request Deal Modal -->
+    <div id="deal-modal" class="modal" role="dialog" aria-modal="true" aria-label="Request a deal">
+      <a class="modal__backdrop" href="#" aria-label="Close modal"></a>
+      <div class="modal__panel" role="document">
+        <header class="modal__header">
+          <h2 class="modal__title">Request Deal</h2>
+          <a class="icon-btn" href="#" aria-label="Close">×</a>
+        </header>
+
+        <form id="dealForm" class="modal__form" action="#" method="post" novalidate>
+          <p id="dealProductTitle" class="pill">Selected item</p>
+          <input id="dealProductId" type="hidden" />
+
+          <div class="field">
+            <label class="field__label" for="dealOfferedPrice">Your offered price (₹)</label>
+            <input
+              id="dealOfferedPrice"
+              class="field__input"
+              type="number"
+              inputmode="numeric"
+              placeholder="e.g. 38999"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealPaymentMethod">Preferred payment method</label>
+            <select id="dealPaymentMethod" class="field__input" required>
+              <option value="upi">UPI</option>
+              <option value="card">Card</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="cash_on_delivery">Cash on Delivery</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealMessage">Message to seller</label>
+            <textarea
+              id="dealMessage"
+              class="field__input"
+              rows="3"
+              placeholder="Any condition, warranty, delivery note..."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealBuyerName">Full Name</label>
+            <input
+              id="dealBuyerName"
+              class="field__input"
+              type="text"
+              placeholder="Your full name"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealBuyerPhone">Phone Number</label>
+            <input
+              id="dealBuyerPhone"
+              class="field__input"
+              type="tel"
+              inputmode="numeric"
+              placeholder="10-digit mobile number"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealBuyerAddress">Delivery Address</label>
+            <textarea
+              id="dealBuyerAddress"
+              class="field__input"
+              rows="3"
+              placeholder="House no, street, area, landmark"
+              required
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealBuyerCity">City</label>
+            <input
+              id="dealBuyerCity"
+              class="field__input"
+              type="text"
+              placeholder="Enter city"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="dealBuyerPincode">Pincode</label>
+            <input
+              id="dealBuyerPincode"
+              class="field__input"
+              type="text"
+              inputmode="numeric"
+              placeholder="6-digit pincode"
+              required
+            />
+          </div>
+
+          <p id="dealError" class="form-error" role="status" aria-live="polite" hidden></p>
+
+          <div class="modal__actions">
+            <button id="dealSubmit" class="btn btn--primary btn--block" type="submit">Send Request</button>
+            <a class="btn btn--outline btn--block" href="#">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- CSS-only Modal (UI only): open via #login-modal -->
+    <div id="login-modal" class="modal" role="dialog" aria-modal="true" aria-label="Login">
+      <a class="modal__backdrop" href="#" aria-label="Close modal"></a>
+      <div class="modal__panel" role="document">
+        <header class="modal__header">
+          <h2 class="modal__title">Login to FetchhIt</h2>
+          <a class="icon-btn" href="#" aria-label="Close">×</a>
+        </header>
+
+        <form id="loginForm" class="modal__form" action="#" method="post" novalidate>
+          <div class="field">
+            <label class="field__label" for="loginEmail">Email</label>
+            <input
+              id="loginEmail"
+              class="field__input"
+              type="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="loginPassword">Password</label>
+            <input
+              id="loginPassword"
+              class="field__input"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              minlength="6"
+              required
+            />
+          </div>
+
+          <p id="loginError" class="form-error" role="status" aria-live="polite" hidden></p>
+
+          <div class="modal__actions">
+            <button id="loginSubmit" class="btn btn--primary btn--block" type="submit">Login</button>
+            <a class="btn btn--outline btn--block" href="#register-modal">Create account</a>
+            <a class="btn btn--ghost btn--block" href="#post-modal">New seller? Post an item</a>
+            <a class="btn btn--outline btn--block" href="#">Close</a>
+          </div>
+
+          <p class="modal__note muted">
+            This will call <code>/api/auth/login</code> and store your JWT locally.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Register modal (real: calls /api/auth/register via script.js) -->
+    <div id="register-modal" class="modal" role="dialog" aria-modal="true" aria-label="Register">
+      <a class="modal__backdrop" href="#" aria-label="Close modal"></a>
+      <div class="modal__panel" role="document">
+        <header class="modal__header">
+          <h2 class="modal__title">Create your FetchhIt account</h2>
+          <a class="icon-btn" href="#" aria-label="Close">×</a>
+        </header>
+
+        <form id="registerForm" class="modal__form" action="#" method="post" novalidate>
+          <div class="field">
+            <label class="field__label" for="regName">Name</label>
+            <input
+              id="regName"
+              class="field__input"
+              type="text"
+              placeholder="Your name"
+              autocomplete="name"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="regEmail">Email</label>
+            <input
+              id="regEmail"
+              class="field__input"
+              type="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="regPassword">Password</label>
+            <input
+              id="regPassword"
+              class="field__input"
+              type="password"
+              placeholder="Minimum 6 characters"
+              autocomplete="new-password"
+              minlength="6"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="regRole">Role</label>
+            <select id="regRole" class="field__input" required>
+              <option value="buyer">Buyer (request deals)</option>
+              <option value="seller">Seller (post items)</option>
+            </select>
+          </div>
+
+          <p id="registerError" class="form-error" role="status" aria-live="polite" hidden></p>
+
+          <div class="modal__actions">
+            <button id="registerSubmit" class="btn btn--primary btn--block" type="submit">Register</button>
+            <a class="btn btn--outline btn--block" href="#login-modal">Already have an account? Login</a>
+            <a class="btn btn--outline btn--block" href="#">Close</a>
+          </div>
+
+          <p class="modal__note muted">
+            This will call <code>/api/auth/register</code> and store your JWT locally.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Compare Devices Modal -->
+
+    <div id="compare-modal" class="modal modal--wide" role="dialog" aria-modal="true" aria-label="Compare devices">
+      <a class="modal__backdrop" href="#" aria-label="Close modal"></a>
+      <div class="modal__panel modal__panel--wide" role="document">
+        <header class="modal__header">
+          <h2 class="modal__title">⇄ Compare Devices</h2>
+          <a class="icon-btn" href="#" aria-label="Close">×</a>
+        </header>
+        <div class="compare__selectors">
+          <div class="compare__selector-col">
+            <label class="field__label" for="compareDeviceA">Device A</label>
+            <select id="compareDeviceA" class="field__input"><option value="">— Select device —</option></select>
+          </div>
+          <div class="compare__vs" aria-hidden="true">VS</div>
+          <div class="compare__selector-col">
+            <label class="field__label" for="compareDeviceB">Device B</label>
+            <select id="compareDeviceB" class="field__input"><option value="">— Select device —</option></select>
+          </div>
+        </div>
+        <button id="compareBtn" class="btn btn--primary btn--block compare__run-btn" type="button">Compare Now</button>
+        <div id="compareResult" class="compare__result" hidden>
+     <div id="compareCards" class="compare__cards">
+  <div id="compareCardA" class="compare__card"></div>
+  <div id="compareCardB" class="compare__card"></div>
+</div>
+          <table class="compare__table" role="table">
+            <thead>
+              <tr>
+                <th class="compare__th compare__th--spec">Specification</th>
+                <th class="compare__th compare__th--a" id="compareLabelA">Device A</th>
+                <th class="compare__th compare__th--b" id="compareLabelB">Device B</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody"></tbody>
+          </table>
+          <p id="compareNote" class="muted compare__note"></p>
+        </div>
+        <p id="compareError" class="form-error" role="status" aria-live="polite" hidden></p>
+      </div>
+    </div>
+
+    <footer class="footer" role="contentinfo">
+      <div class="container footer__inner">
+        <div class="footer__brand-block">
+          <p class="footer__brand">FetchhIt</p>
+          <p class="footer__tagline">The smarter way to buy & sell.</p>
+        </div>
+        <div class="footer__links">
+          <a href="#" class="footer__link">About</a>
+          <a href="#" class="footer__link">How it works</a>
+          <a href="#" class="footer__link">Seller Hub</a>
+          <a href="#" class="footer__link">Support</a>
+          <a href="#" class="footer__link">Privacy</a>
+        </div>
+        <p class="footer__meta">© 2025 FetchhIt. All rights reserved.</p>
+      </div>
+    </footer>
+
+
+  </body>
+</html>
+
+
+
+
